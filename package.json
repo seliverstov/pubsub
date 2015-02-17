@@ -2,10 +2,7 @@
   "name": "pubsub",
   "version": "0.0.1",
   "description": "Publish and subscribe daemon",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js"
-  },
+
   "dependencies": {
     "twitter": "~1.2.1",
     "node-schedule": "~0.1.16",
