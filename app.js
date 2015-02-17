@@ -10,10 +10,15 @@ var client = new Twitter({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-var since_id = process.env.SINCE_ID;
+//var since_id = process.env.SINCE_ID;
 
-var publishJob = schedule.scheduleJob({}, publishTweet);
-var subscribeJob = schedule.scheduleJob({}, getResentTweets);
+//var publishJob = schedule.scheduleJob({}, publishTweet);
+//var subscribeJob = schedule.scheduleJob({}, getResentTweets);
+
+publishTweet();
+
+getResentTweets();
+
 
 function publishTweet(){
   console.log('It\'s time to publish new tweet');
@@ -60,14 +65,6 @@ function publishTweet(){
 function getResentTweets(){
   console.log('It\'s time to check for new tweets');
 
-  var params = {
-    screen_name: 'UberFacts',
-    count: 200,
-    include_rts: false,
-    exclude_replies: true,
-    since_id: since_id
-  };
-
   var saveTweets = function(tweets){
     MongoClient.connect(process.env.MONGO_URL, function(err, db) {
       if(!err) {
@@ -95,21 +92,44 @@ function getResentTweets(){
     });
   };
 
-  client.get('statuses/user_timeline.json',params,function(err, tweets, response){
-    if (!err){
-      if (tweets.length>0 && tweets[tweets.length-1].id===since_id){
-        tweets.pop();
-      }
-      if (tweets.length > 0){
-        console.log(tweets.length+' tweets from '+tweets[0].id+' to '+tweets[tweets.length-1].id+' where found since '+since_id);
-        since_id = tweets[0].id;
-        console.log('Update "since" value to ',since_id);
-        saveTweets(tweets);
+  MongoClient.connect(process.env.MONGO_URL, function(err, db) {
+    var collection = db.collection('tweets');
+    collection.findOne({},{sort:[["id","desc"]]},function(err,tweet){
+      var since_id;
+      if (tweet){
+          since_id = tweet.id;
+          console.log('Set "since_id" to ',since_id);
       }else{
-        console.log('No new tweets were found since ',since_id);
+        console.log('Cant find any tweet in database. Set "since_id" to "undefined".');
       }
-    }else{
-      console.log(err);
-    }
+      db.close();
+
+      var params = {
+        screen_name: 'UberFacts',
+        count: 200,
+        include_rts: false,
+        exclude_replies: true,
+        since_id: since_id
+      };
+
+      client.get('statuses/user_timeline.json',params,function(err, tweets, response){
+        if (!err){
+          if (tweets.length>0 && tweets[tweets.length-1].id===since_id){
+            tweets.pop();
+          }
+          if (tweets.length > 0){
+            console.log(tweets.length+' tweets from '+tweets[0].id+' to '+tweets[tweets.length-1].id+' where found since '+since_id);
+            //since_id = tweets[0].id;
+            //console.log('Update "since" value to ',since_id);
+            saveTweets(tweets);
+          }else{
+            console.log('No new tweets were found since ',since_id);
+          }
+        }else{
+          console.log(err);
+        }
+      });
+    });
   });
+
 };
