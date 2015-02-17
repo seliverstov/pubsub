@@ -2,6 +2,7 @@ var Twitter = require('twitter');
 var schedule = require('node-schedule');
 var MongoClient = require('mongodb').MongoClient;
 var translate = require('yandex-translate');
+var Q = require('q');
 
 var client = new Twitter({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
@@ -10,8 +11,11 @@ var client = new Twitter({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-publishTweet();
-getResentTweets();
+//var publishJob = schedule.scheduleJob({}, publishTweet);
+//var subscribeJob = schedule.scheduleJob({}, getResentTweets);
+
+
+publishTweet().done(getResentTweets);
 
 if (process.env.DELAY_SEC){
   console.log('Schedule next execution after '+process.env.DELAY_SEC+' seconds');
@@ -19,7 +23,9 @@ if (process.env.DELAY_SEC){
   setTimeout(getResentTweets,process.env.DELAY_SEC*1000);
 }
 
+
 function publishTweet(){
+  var d = Q.defer();
   console.log('It\'s time to publish new tweet');
   MongoClient.connect(process.env.MONGO_URL, function(err, db) {
     if (!err){
@@ -40,25 +46,31 @@ function publishTweet(){
                     console.log('Can\'t update tweet '+tweet.id_str+': ',err);
                   }
                   db.close();
+                  d.resolve();
                 });
               }else{
                 console.log('Can\'t post tweet '+tweet.id_str+': ',err);
                 db.close();
+                d.resolve();
               }
             });
           }else{
             console.log('Can\'t find any tweet for publish');
             db.close();
+            d.resolve();
           }
         }else{
           console.log(err);
           db.close();
+          d.resolve();
         }
       });
     }else{
       console.log(err);
+      d.resolve();
     }
   });
+  return d.promise;
 }
 
 function getResentTweets(){
@@ -68,7 +80,9 @@ function getResentTweets(){
     MongoClient.connect(process.env.MONGO_URL, function(err, db) {
       if(!err) {
         var collection = db.collection('tweets');
+        var promises = [];
         tweets.forEach(function(tweet){
+          var d = Q.defer();
           tweet._id = tweet.id_str;
           tweet.status='N';
           translate(tweet.text, { to: 'ru', key: process.env.YANDEX_TRANSLATE_API_KEY }, function(err, res){
@@ -83,8 +97,13 @@ function getResentTweets(){
               }else{
                 console.log('Can\'t save tweet '+tweet.id_str+': ',err);
               }
+              d.resolve();
             });
           });
+          promises.push(d.promise);
+        });
+        Q.all(promises).done(function(){
+          db.close();
         });
       }else{
         console.log(err);
@@ -96,14 +115,6 @@ function getResentTweets(){
     var collection = db.collection('tweets');
     collection.findOne({},{sort:[["id","desc"]]},function(err,tweet){
       var since_id;
-<<<<<<< HEAD
-      if (tweet){
-          since_id = tweet.id;
-          console.log('Set "since_id" to ',since_id);
-      }else{
-        console.log('Cant find any tweet in database. Set "since_id" to "undefined".');
-      }
-=======
       if (!err){
         if (tweet){
           since_id = tweet.id_str;
@@ -115,7 +126,6 @@ function getResentTweets(){
         console.log('Cant find any tweet in database due to error: ',err);
       }
 
->>>>>>> 35be30f2c9ad05fae1addbc78f2bdcd00492d35c
       db.close();
 
       var params = {
@@ -128,21 +138,12 @@ function getResentTweets(){
 
       client.get('statuses/user_timeline.json',params,function(err, tweets, response){
         if (!err){
-<<<<<<< HEAD
-          if (tweets.length>0 && tweets[tweets.length-1].id===since_id){
-            tweets.pop();
-          }
-          if (tweets.length > 0){
-            console.log(tweets.length+' tweets from '+tweets[0].id+' to '+tweets[tweets.length-1].id+' where found since '+since_id);
-            //since_id = tweets[0].id;
-=======
           if (tweets.length>0 && tweets[tweets.length-1].id_str===since_id){
             tweets.pop();
           }
           if (tweets.length > 0){
             console.log(tweets.length+' tweets from '+tweets[0].id_str+' to '+tweets[tweets.length-1].id_str+' where found since '+since_id);
             //since_id = tweets[0].id_str;
->>>>>>> 35be30f2c9ad05fae1addbc78f2bdcd00492d35c
             //console.log('Update "since" value to ',since_id);
             saveTweets(tweets);
           }else{

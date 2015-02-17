@@ -2,12 +2,12 @@
   "name": "pubsub",
   "version": "0.0.1",
   "description": "Publish and subscribe daemon",
-
   "dependencies": {
-    "twitter": "~1.2.1",
+    "mongodb": "~1.4.31",
     "node-schedule": "~0.1.16",
-    "yandex-translate": "~1.0.1",
-    "mongodb": "~1.4.31"
+    "q": "^1.1.2",
+    "twitter": "~1.2.1",
+    "yandex-translate": "~1.0.1"
   },
   "engines": {
     "node": "0.10.x"
