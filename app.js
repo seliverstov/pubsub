@@ -33,7 +33,7 @@ function publishTweet(){
         if (!err){
           if (tweet){
             console.log('Tweet '+tweet.id_str+' was choosen for publish');
-            client.post('statuses/update.json', {status: tweet.text_ru},  function(err, t, response){
+            client.post('statuses/update.json', {status: tweet.text_ru.substring(0,140)},  function(err, t, response){
               if (!err){
                 console.log('Tweet '+tweet.id_str+' was published: ',tweet.text_ru);
                 tweet.status='P';
