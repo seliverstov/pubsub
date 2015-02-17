@@ -1,0 +1,22 @@
+{
+  "name": "pubsub",
+  "version": "0.0.1",
+  "description": "Publish and subscribe daemon",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "twitter": "~1.2.1",
+    "node-schedule": "~0.1.16",
+    "yandex-translate": "~1.0.1",
+    "mongodb": "~1.4.31"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seliverstov/pubsub.git"
+  }
+}
