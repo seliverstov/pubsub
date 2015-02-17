@@ -75,6 +75,7 @@ function getResentTweets(){
         var collection = db.collection('tweets');
         tweets.forEach(function(tweet){
           tweet._id = tweet.id_str;
+          tweet.status='N';
           translate(tweet.text, { to: 'ru', key: process.env.YANDEX_TRANSLATE_API_KEY }, function(err, res){
             if (!err){
               tweet.text_ru = res.text[0];
