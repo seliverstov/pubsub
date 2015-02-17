@@ -26,11 +26,11 @@ function initialLoad(successHandler,errorHandler){
   var handler = function(error, tweets, response){
     if (!error){
       total += tweets.length;
-      console.log('Get '+tweets.length+' tweets from '+tweets[0].id+' to '+tweets[tweets.length-1].id+'. Total: '+total);
+      console.log('Get '+tweets.length+' tweets from '+tweets[0].id_str+' to '+tweets[tweets.length-1].id_str+'. Total: '+total);
       saveTweets(tweets,function(){
         if (count>0){
           count--;
-          params.max_id = tweets[tweets.length-1].id-1;
+          params.max_id = tweets[tweets.length-1].id_str;
           client.get('statuses/user_timeline.json', params,handler);
         }else{
           if (successHandler) successHandler();
@@ -60,7 +60,7 @@ function saveTweets(tweets,successHandler,errorHandler){
       if (index<tweets.length-1){
         index++;
         var tweet = tweets[index];
-        tweet._id = tweet.id;
+        tweet._id = tweet.id_str;
         translate(tweet.text, { to: 'ru', key: process.env.YANDEX_TRANSLATE_API_KEY }, function(err, res){
           if (!err){
             tweet.text_ru = res.text[0];
@@ -75,7 +75,7 @@ function saveTweets(tweets,successHandler,errorHandler){
       }
     };
     var tweet = tweets[index];
-    tweet._id = tweet.id;
+    tweet._id = tweet.id_str;
     collection.save(tweet,handler);
   });
 }
